@@ -1,14 +1,17 @@
-import { useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
+import { useId, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from "react";
 
 export function Field({
   label,
+  id,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
   return (
-    <label className="workspace-field">
-      {label}
-      <input {...props} />
-    </label>
+    <div className="workspace-field">
+      <label htmlFor={fieldId}>{label}</label>
+      <input id={fieldId} {...props} />
+    </div>
   );
 }
 
@@ -25,13 +28,14 @@ export function Select({
   defaultValue?: string;
   required?: boolean;
 }) {
+  const fieldId = useId();
   return (
-    <label className="workspace-field">
-      {label}
-      <select name={name} defaultValue={defaultValue} required={required}>
+    <div className="workspace-field">
+      <label htmlFor={fieldId}>{label}</label>
+      <select id={fieldId} name={name} defaultValue={defaultValue} required={required}>
         {children}
       </select>
-    </label>
+    </div>
   );
 }
 
@@ -46,11 +50,12 @@ export function TextArea({
   defaultValue?: string;
   rows?: number;
 }) {
+  const fieldId = useId();
   return (
-    <label className="workspace-field">
-      {label}
-      <textarea name={name} rows={rows} defaultValue={defaultValue} />
-    </label>
+    <div className="workspace-field">
+      <label htmlFor={fieldId}>{label}</label>
+      <textarea id={fieldId} name={name} rows={rows} defaultValue={defaultValue} />
+    </div>
   );
 }
 
