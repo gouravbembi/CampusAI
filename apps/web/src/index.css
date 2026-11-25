@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --color-background: #f5f4ed;
+  --color-foreground: #162e26;
+  --color-card: #fffef8;
+  --color-border: #dcded1;
+  --color-muted: #e9eee2;
+  --color-muted-foreground: #4c6057;
+  --color-primary: #183b30;
+  --color-primary-foreground: #fffef8;
+}
+
+body {
+  min-width: 0;
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+::selection {
+  background: #d4e6b7;
+  color: #162e26;
+}
