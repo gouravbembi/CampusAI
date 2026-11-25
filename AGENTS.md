@@ -9,3 +9,6 @@
 - Validate inputs at the boundary, return consistent errors without internals, and keep service credentials out of browser bundles.
 - Keep AI output advisory and attributable to the analysis version. Require human decisions and preserve recruiting workflows during AI outages.
 - Follow the existing TypeScript and Python tooling. Run the README verification commands and add targeted tests for new behavior.
+
+- Preserve the credential and scope checks described in [authentication](docs/AUTHENTICATION.md) and [permissions](docs/PERMISSIONS.md). Register new state-changing endpoints behind the API Origin and CSRF checks.
+- Keep document access private. Write audit events with protected mutations where they share a transaction, and run the real PostgreSQL and object storage integration tests when touching either boundary.

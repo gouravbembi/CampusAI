@@ -55,6 +55,8 @@ jobs:
           curl --fail --silent --show-error http://localhost:3001/ready | grep -F '"status":"ready"'
           curl --fail --silent --show-error http://localhost:8002/health | grep -F '"service":"ai"'
           docker compose exec -T db psql -U campusai -d campusai -Atc "SELECT to_regclass('public.institutions')" | grep -x institutions
+      - name: Run PostgreSQL and real S3 integration tests
+        run: docker compose exec -T api npm run test:integration
       - if: failure()
         run: docker compose logs --no-color
       - if: always()

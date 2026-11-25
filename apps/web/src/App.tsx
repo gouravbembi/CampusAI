@@ -53,12 +53,17 @@ export function App() {
             </span>
             CampusAI
           </a>
-          <a
-            href="#roles"
-            className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
-          >
-            Explore roles <ArrowUpRight aria-hidden size={15} />
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="#roles"
+              className="hidden text-sm font-semibold hover:underline sm:inline-flex sm:items-center sm:gap-1.5"
+            >
+              Explore roles <ArrowUpRight aria-hidden size={15} />
+            </a>
+            <a href="/login" className={buttonVariants({ variant: "outline" })}>
+              Sign in
+            </a>
+          </div>
         </nav>
       </header>
       <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-5 sm:px-8">

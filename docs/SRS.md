@@ -1,6 +1,6 @@
 # Software Requirements Specification
 
-CampusAI v0.1 · Phase 1 baseline
+CampusAI · Phase 2 baseline
 
 ## 1. Purpose and scope
 
@@ -39,7 +39,7 @@ Roles are institution-scoped memberships. Permissions are default-deny and enfor
 - A drive belongs to one institution and one employer organization. Recruiter membership and drive assignment determine candidate visibility. Officer approval precedes publication.
 - Eligibility uses verified academic facts, drive policy and the application deadline in UTC. Version policy so a later edit cannot silently change a past application decision.
 - The application lifecycle begins at submitted and can progress through review, interview and offer or rejection under authorized actor rules. The student can withdraw from permitted active states. Record offer acceptance or decline separately from the offer decision. Finalize the transition matrix in Phase 4.
-- The MVP data model includes Institution, User, Membership, StudentProfile, Employer, RecruiterAssignment, Drive, EligibilityPolicyVersion, ResumeVersion, Application, StageEvent, OfferOutcome and AuditEvent. Phase 1 persists Institution only. Later document content belongs in private encrypted storage.
+- The MVP data model includes Institution, User, Membership, StudentProfile, Employer, RecruiterAssignment, Drive, EligibilityPolicyVersion, ResumeVersion, Application, StageEvent, OfferOutcome and AuditEvent. Phase 2 persists account credentials, scope, academic and recruiter records, and document metadata. Resume bytes belong in a private S3-compatible bucket.
 - A provider outage or unavailable analysis must leave eligibility, applications and human decisions usable.
 
 ## 5. Nonfunctional requirements
@@ -57,6 +57,10 @@ Roles are institution-scoped memberships. Permissions are default-deny and enfor
 
 ## 6. Interfaces and release acceptance
 
-Phase 1 exposes web `/`, Express `GET /health` and `GET /ready`, and FastAPI `GET /health`. Health payloads contain service and status only. Future business APIs use versioned contracts and authenticated JSON. Future private upload and analysis interfaces define file limits, error semantics, provenance and retention before implementation.
+Phase 1 exposes web `/`, Express `GET /health` and `GET /ready`, and FastAPI `GET /health`. Health payloads contain service and status only. Phase 2 exposes authenticated identity and institutional APIs, multipart resume upload, and authorized attachment retrieval. Future analysis contracts define error semantics, provenance and input retention before implementation.
 
-Phase 1 acceptance requires reproducible dependency installation, source checks, builds, baseline tests, PostgreSQL migration and a Compose smoke test. Each subsequent phase adds acceptance evidence for its requirements. Institutional policies for eligibility, data retention, identity provider choice and release service levels remain open until the pilot owner confirms them.
+Phase 1 acceptance requires reproducible dependency installation, source checks, builds, baseline tests, PostgreSQL migration and a Compose smoke test. Each subsequent phase adds acceptance evidence for its requirements. Email and password sign-in serves Phase 2. Institutional SSO, eligibility, data retention and release service levels remain open for pilot planning.
+
+## 7. Future AI capabilities
+
+The AI pilot retains resume parsing, ATS-style scoring and feedback, skill extraction and normalization, resume-to-job semantic matching, explainable compatibility scores, skill-gap analysis, personalized job recommendations, and a grounded AI career assistant. Use reproducible AI evaluation with permissioned fixtures, versioned inputs and outputs, documented thresholds, and failure cases. All AI output remains advisory. Authorized humans make hiring decisions, and core workflows remain usable during AI outages.

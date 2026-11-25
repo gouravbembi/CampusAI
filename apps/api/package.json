@@ -8,20 +8,34 @@
     "start": "node dist/server.js",
     "test": "tsx --test src/*.test.ts",
     "db:generate": "prisma generate",
-    "db:validate": "prisma validate"
+    "db:validate": "prisma validate",
+    "bootstrap:admin": "tsx src/commands/bootstrap.ts",
+    "documents:purge": "tsx src/commands/purge-documents.ts",
+    "storage:init": "tsx src/commands/init-storage.ts",
+    "test:integration": "tsx --test src/integration/*.test.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1177.0",
+    "@node-rs/argon2": "^2.2.2",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.2.0",
+    "express-rate-limit": "^8.7.5",
     "helmet": "^8.1.0",
-    "pg": "^8"
+    "multer": "^2.5.0",
+    "nodemailer": "^10.6.1",
+    "pg": "^8",
+    "yauzl": "^3.4.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.3.0",
+    "@types/nodemailer": "^8.0.2",
+    "@types/yauzl": "^3.4.0",
     "prisma": "7.10.1",
     "tsx": "^4.21.0"
   }

@@ -19,18 +19,53 @@ services:
       timeout: 3s
       retries: 20
 
+  storage:
+    image: versity/versitygw:v1.0.12
+    command: ["--port", ":9000", "--quiet", "posix", "/data"]
+    environment:
+      ROOT_ACCESS_KEY: campusai-local
+      ROOT_SECRET_KEY: campusai-local-dev-only
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - object-data:/data
+
+  mail:
+    image: axllent/mailpit:v1.27.0
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
   api:
     image: campusai-node-dev
     build: *node-build
     command:
-      ["sh", "-c", "npm exec -w @campusai/api -- prisma migrate deploy && exec npm run dev:api"]
+      [
+        "sh",
+        "-c",
+        "npm exec -w @campusai/api -- prisma migrate deploy && npm run storage:init -w @campusai/api && exec npm run dev:api",
+      ]
     environment:
       PORT: 3001
       WEB_ORIGIN: http://localhost:5173
       DATABASE_URL: postgresql://${POSTGRES_USER:-campusai}:${POSTGRES_PASSWORD:-campusai}@db:5432/${POSTGRES_DB:-campusai}?schema=public&connect_timeout=3
+      MAIL_MODE: development
+      MAIL_FROM: "CampusAI <campusai@example.test>"
+      SMTP_HOST: mail
+      SMTP_PORT: 1025
+      S3_ENDPOINT: http://storage:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: campusai-private
+      S3_PATH_STYLE: "true"
+      S3_ACCESS_KEY: campusai-local
+      S3_SECRET_KEY: campusai-local-dev-only
     ports:
       - "127.0.0.1:3001:3001"
     depends_on:
+      storage:
+        condition: service_started
+      mail:
+        condition: service_started
       db:
         condition: service_healthy
     healthcheck:
@@ -82,3 +117,4 @@ services:
 
 volumes:
   postgres-data:
+  object-data:

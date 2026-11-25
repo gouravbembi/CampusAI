@@ -18,13 +18,15 @@
     "format:check": "prettier --check .",
     "test": "npm run test --workspaces",
     "db:generate": "npm run db:generate -w @campusai/api",
-    "db:validate": "npm run db:validate -w @campusai/api"
+    "db:validate": "npm run db:validate -w @campusai/api",
+    "test:integration": "npm run test:integration -w @campusai/api"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.7",
     "eslint": "^10.15.0",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "jsdom": "^27.4.0",
     "prettier": "^3.10.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.74.0"
