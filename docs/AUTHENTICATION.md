@@ -1,0 +1,11 @@
+# Authentication architecture
+
+CampusAI uses one email identity per account and one membership per institution. The server loads the live membership and derives its role on every scoped request. Operator bootstrap provisions the first administrator with a password supplied on standard input. The operator verifies the email owner before provisioning. All other users join through invitations bound to an institution, email, role and optional verified employer. Links expire after 48 hours, are single-use, and prove control of the inbox. Existing users supply their current password to link a new membership.
+
+Passwords use Argon2id with 19 MiB of memory, two iterations and one lane. New passwords must contain 12–128 characters. Unknown accounts are checked against a dummy hash. Unknown, suspended and incorrect logins return the same credential error. Authentication and recovery requests are IP-rate-limited. The development inbox runs in Mailpit. The production SMTP adapter uses TLS and can be replaced through the mailer interface.
+
+Sessions and email credentials use independent 256-bit random tokens. Only SHA-256 digests reach PostgreSQL. Sign-in rotates the current cookie and creates a 12-hour database-backed session. The session cookie is HttpOnly and SameSite=Lax. Production adds Secure and the host-only `__Host-` prefix. Reset links expire after 30 minutes, standalone verification links after one hour, and both are single-use. The browser removes link fragments after reading them. The frontend keeps tokens out of browser storage. Password changes and resets atomically revoke all sessions and advance the credential version. Membership role and access changes revoke sessions and retain the revised scope on later sign-ins.
+
+The API checks the exact configured Origin and the non-simple `X-CampusAI-CSRF: 1` header on every mutation. Credentialed CORS permits a single web origin. Deploy both surfaces on the same site and preferably one HTTPS origin. The health endpoints remain independent of identity and mail.
+
+To add SSO, map trusted issuer and subject pairs to internal user IDs and issue the same opaque session after verifying the OIDC login. Institution assignments, scope checks, business records and audit ownership can stay on the existing user and membership models. Account linking requires an explicit verified identity policy.

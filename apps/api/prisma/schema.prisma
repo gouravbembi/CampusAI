@@ -13,5 +13,339 @@ model Institution {
   name      String
   createdAt DateTime @default(now()) @map("created_at")
 
+  memberships Membership[]
+  invitations Invitation[]
+  departments Department[]
+  employers   Employer[]
+  auditEvents AuditEvent[]
+
   @@map("institutions")
+}
+
+enum Role {
+  STUDENT
+  RECRUITER
+  PLACEMENT_OFFICER
+  ADMINISTRATOR
+}
+
+enum AccessStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ResumeStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+model User {
+  id                 String                   @id @default(uuid()) @db.Uuid
+  email              String                   @unique
+  passwordHash       String
+  credentialVersion  Int                      @default(0)
+  status             AccessStatus             @default(ACTIVE)
+  emailVerifiedAt    DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  memberships        Membership[]
+  sessions           Session[]
+  resetTokens        PasswordResetToken[]
+  verificationTokens EmailVerificationToken[]
+  auditEvents        AuditEvent[]
+
+  @@map("users")
+}
+
+model Membership {
+  id            String                @id @default(uuid()) @db.Uuid
+  userId        String                @db.Uuid
+  institutionId String                @db.Uuid
+  role          Role
+  status        AccessStatus          @default(ACTIVE)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  institution   Institution           @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  student       StudentProfile?
+  recruiter     RecruiterProfile?
+  assignments   RecruiterAssignment[]
+
+  @@unique([userId, institutionId])
+  @@unique([id, institutionId])
+  @@index([institutionId, role, status])
+  @@map("memberships")
+}
+
+model Session {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  tokenDigest       String    @unique
+  credentialVersion Int
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Invitation {
+  id            String      @id @default(uuid()) @db.Uuid
+  institutionId String      @db.Uuid
+  employerId    String?     @db.Uuid
+  email         String
+  role          Role
+  tokenDigest   String      @unique
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  revokedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  employer      Employer?   @relation(fields: [employerId, institutionId], references: [id, institutionId], onDelete: Restrict)
+
+  @@index([institutionId, email, expiresAt])
+  @@map("invitations")
+}
+
+model EmailVerificationToken {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  tokenDigest       String    @unique
+  credentialVersion Int
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @db.Uuid
+  tokenDigest       String    @unique
+  credentialVersion Int
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model StudentProfile {
+  id             String           @id @default(uuid()) @db.Uuid
+  membershipId   String           @unique @db.Uuid
+  institutionId  String           @db.Uuid
+  fullName       String
+  phone          String?
+  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime         @default(now())
+  membership     Membership       @relation(fields: [membershipId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  academic       AcademicRecord?
+  skills         StudentSkill[]
+  certifications Certification[]
+  projects       StudentProject[]
+  resumes        ResumeVersion[]
+
+  @@unique([id, institutionId])
+  @@unique([membershipId, institutionId])
+  @@index([institutionId, fullName])
+  @@map("student_profiles")
+}
+
+model Department {
+  id            String          @id @default(uuid()) @db.Uuid
+  institutionId String          @db.Uuid
+  name          String
+  code          String
+  createdAt     DateTime        @default(now())
+  institution   Institution     @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  programs      DegreeProgram[]
+
+  @@unique([institutionId, code])
+  @@unique([id, institutionId])
+  @@map("departments")
+}
+
+model DegreeProgram {
+  id            String           @id @default(uuid()) @db.Uuid
+  institutionId String           @db.Uuid
+  departmentId  String           @db.Uuid
+  name          String
+  code          String
+  createdAt     DateTime         @default(now())
+  department    Department       @relation(fields: [departmentId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  records       AcademicRecord[]
+
+  @@unique([institutionId, code])
+  @@unique([id, institutionId])
+  @@index([departmentId, institutionId])
+  @@map("degree_programs")
+}
+
+model AcademicRecord {
+  id             String             @id @default(uuid()) @db.Uuid
+  studentId      String             @unique @db.Uuid
+  institutionId  String             @db.Uuid
+  programId      String             @db.Uuid
+  graduationYear Int
+  cgpa           Decimal            @db.Decimal(4, 2)
+  activeBacklogs Int
+  status         VerificationStatus @default(PENDING)
+  revision       Int                @default(1)
+  reviewedAt     DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  student        StudentProfile     @relation(fields: [studentId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  program        DegreeProgram      @relation(fields: [programId, institutionId], references: [id, institutionId], onDelete: Restrict)
+
+  @@unique([studentId, institutionId])
+  @@index([institutionId, status])
+  @@index([programId, institutionId])
+  @@map("academic_records")
+}
+
+model Skill {
+  id       String         @id @default(uuid()) @db.Uuid
+  name     String         @unique
+  students StudentSkill[]
+
+  @@map("skills")
+}
+
+model StudentSkill {
+  studentId String         @db.Uuid
+  skillId   String         @db.Uuid
+  createdAt DateTime       @default(now())
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  skill     Skill          @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@id([studentId, skillId])
+  @@index([skillId])
+  @@map("student_skills")
+}
+
+model Certification {
+  id        String         @id @default(uuid()) @db.Uuid
+  studentId String         @db.Uuid
+  name      String
+  issuer    String
+  createdAt DateTime       @default(now())
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, name, issuer])
+  @@map("certifications")
+}
+
+model StudentProject {
+  id          String         @id @default(uuid()) @db.Uuid
+  studentId   String         @db.Uuid
+  name        String
+  description String
+  createdAt   DateTime       @default(now())
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, name])
+  @@map("student_projects")
+}
+
+model Employer {
+  id            String                @id @default(uuid()) @db.Uuid
+  institutionId String                @db.Uuid
+  name          String
+  website       String?
+  status        VerificationStatus    @default(PENDING)
+  revision      Int                   @default(1)
+  reviewedAt    DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  institution   Institution           @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  assignments   RecruiterAssignment[]
+  invitations   Invitation[]
+
+  @@unique([id, institutionId])
+  @@unique([institutionId, name])
+  @@index([institutionId, status])
+  @@map("employers")
+}
+
+model RecruiterProfile {
+  membershipId String     @id @db.Uuid
+  fullName     String
+  title        String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+
+  @@map("recruiter_profiles")
+}
+
+model RecruiterAssignment {
+  membershipId  String       @db.Uuid
+  employerId    String       @db.Uuid
+  institutionId String       @db.Uuid
+  status        AccessStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  membership    Membership   @relation(fields: [membershipId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  employer      Employer     @relation(fields: [employerId, institutionId], references: [id, institutionId], onDelete: Restrict)
+
+  @@id([membershipId, employerId])
+  @@index([employerId, institutionId])
+  @@map("recruiter_assignments")
+}
+
+model ResumeVersion {
+  id              String         @id @default(uuid()) @db.Uuid
+  studentId       String         @db.Uuid
+  institutionId   String         @db.Uuid
+  storageKey      String         @unique
+  filename        String
+  contentType     String
+  size            Int
+  status          ResumeStatus   @default(ARCHIVED)
+  createdAt       DateTime       @default(now())
+  deletedAt       DateTime?
+  objectDeletedAt DateTime?
+  student         StudentProfile @relation(fields: [studentId, institutionId], references: [id, institutionId], onDelete: Restrict)
+
+  @@index([studentId, createdAt])
+  @@index([status, objectDeletedAt])
+  @@map("resume_versions")
+}
+
+model AuditEvent {
+  id            String       @id @default(uuid()) @db.Uuid
+  actorId       String?      @db.Uuid
+  institutionId String?      @db.Uuid
+  action        String
+  targetId      String?      @db.Uuid
+  createdAt     DateTime     @default(now())
+  actor         User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+
+  @@index([institutionId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_events")
+}
+
+model DocumentCleanup {
+  storageKey String   @id
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("document_cleanup")
 }

@@ -18,7 +18,8 @@
     "format:check": "prettier --check .",
     "test": "npm run test --workspaces",
     "db:generate": "npm run db:generate -w @campusai/api",
-    "db:validate": "npm run db:validate -w @campusai/api"
+    "db:validate": "npm run db:validate -w @campusai/api",
+    "test:integration": "npm run test:integration -w @campusai/api"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
