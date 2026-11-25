@@ -1,0 +1,84 @@
+x-node-build: &node-build
+  context: .
+  dockerfile: Dockerfile.node
+
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-campusai}
+      POSTGRES_USER: ${POSTGRES_USER:-campusai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-campusai}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    image: campusai-node-dev
+    build: *node-build
+    command:
+      ["sh", "-c", "npm exec -w @campusai/api -- prisma migrate deploy && exec npm run dev:api"]
+    environment:
+      PORT: 3001
+      WEB_ORIGIN: http://localhost:5173
+      DATABASE_URL: postgresql://${POSTGRES_USER:-campusai}:${POSTGRES_PASSWORD:-campusai}@db:5432/${POSTGRES_DB:-campusai}?schema=public&connect_timeout=3
+    ports:
+      - "127.0.0.1:3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  ai:
+    build:
+      context: services/ai
+    ports:
+      - "127.0.0.1:8002:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health', timeout=3).close()",
+        ]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  web:
+    image: campusai-node-dev
+    build: *node-build
+    command: ["npm", "run", "dev:web"]
+    ports:
+      - "127.0.0.1:5173:5173"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:5173/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres-data:
